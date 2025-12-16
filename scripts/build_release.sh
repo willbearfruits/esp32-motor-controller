@@ -76,34 +76,51 @@ done
 echo ""
 echo -e "${YELLOW}Generating manifest.json...${NC}"
 
-cat > "$DOCS_DIR/manifest.json" << EOF
-{
+# Start JSON
+echo '{
   "name": "ESP32 Motor Controller",
-  "version": "$VERSION",
+  "version": "'"$VERSION"'",
   "home_assistant_domain": "esphome",
   "new_install_prompt_erase": true,
-  "builds": [
-    {
+  "builds": [' > "$DOCS_DIR/manifest.json"
+
+FIRST=true
+
+# Add builds if they exist
+if [ -f "$DOCS_DIR/motor_controller_esp32_v${VERSION}.bin" ]; then
+    echo '    {
       "chipFamily": "ESP32",
       "parts": [
-        { "path": "motor_controller_esp32_v${VERSION}.bin", "offset": 0 }
+        { "path": "motor_controller_esp32_v'"$VERSION"'.bin", "offset": 0 }
       ]
-    },
-    {
+    }' >> "$DOCS_DIR/manifest.json"
+    FIRST=false
+fi
+
+if [ -f "$DOCS_DIR/motor_controller_esp32s3_v${VERSION}.bin" ]; then
+    if [ "$FIRST" = false ]; then echo "," >> "$DOCS_DIR/manifest.json"; fi
+    echo '    {
       "chipFamily": "ESP32-S3",
       "parts": [
-        { "path": "motor_controller_esp32s3_v${VERSION}.bin", "offset": 0 }
+        { "path": "motor_controller_esp32s3_v'"$VERSION"'.bin", "offset": 0 }
       ]
-    },
-    {
+    }' >> "$DOCS_DIR/manifest.json"
+    FIRST=false
+fi
+
+if [ -f "$DOCS_DIR/motor_controller_esp32c3_v${VERSION}.bin" ]; then
+    if [ "$FIRST" = false ]; then echo "," >> "$DOCS_DIR/manifest.json"; fi
+    echo '    {
       "chipFamily": "ESP32-C3",
       "parts": [
-        { "path": "motor_controller_esp32c3_v${VERSION}.bin", "offset": 0 }
+        { "path": "motor_controller_esp32c3_v'"$VERSION"'.bin", "offset": 0 }
       ]
-    }
-  ]
-}
-EOF
+    }' >> "$DOCS_DIR/manifest.json"
+fi
+
+# Close JSON
+echo '  ]
+}' >> "$DOCS_DIR/manifest.json"
 
 echo ""
 echo -e "${GREEN}================================${NC}"
