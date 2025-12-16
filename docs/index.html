@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 Motor Controller</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f23;
+      --card: #1a1a2e;
+      --accent: #16213e;
+      --highlight: #e94560;
+      --text: #eee;
+      --muted: #888;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    header {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: linear-gradient(135deg, var(--card) 0%, var(--accent) 100%);
+      border-bottom: 3px solid var(--highlight);
+    }
+    header h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(90deg, var(--text), var(--highlight));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      font-size: 1.25rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .hero-buttons {
+      margin-top: 2rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-block;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .btn-primary {
+      background: var(--highlight);
+      color: white;
+    }
+    .btn-secondary {
+      background: var(--accent);
+      color: var(--text);
+      border: 2px solid var(--highlight);
+    }
+    section {
+      padding: 4rem 0;
+    }
+    section h2 {
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+    .feature-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 2rem;
+      border: 1px solid var(--accent);
+      transition: border-color 0.2s;
+    }
+    .feature-card:hover {
+      border-color: var(--highlight);
+    }
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .feature-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .feature-card p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .motor-types {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .motor-card {
+      background: var(--card);
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .motor-card h4 {
+      margin-bottom: 0.5rem;
+      color: var(--highlight);
+    }
+    .motor-card ul {
+      list-style: none;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .api-section {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+    .api-section h3 {
+      margin-bottom: 1rem;
+      color: var(--highlight);
+    }
+    .api-endpoint {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--accent);
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    .api-endpoint:last-child {
+      border-bottom: none;
+    }
+    .method {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      min-width: 60px;
+      text-align: center;
+    }
+    .method.get { background: #4ade80; color: #000; }
+    .method.post { background: #60a5fa; color: #000; }
+    .method.delete { background: #ef4444; color: #fff; }
+    .wiring-section {
+      margin-top: 3rem;
+    }
+    .wiring-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .wiring-card {
+      background: var(--card);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+    .wiring-card h4 {
+      color: var(--highlight);
+      margin-bottom: 1rem;
+    }
+    .wiring-card table {
+      width: 100%;
+      font-size: 0.9rem;
+    }
+    .wiring-card td {
+      padding: 0.25rem 0;
+    }
+    .wiring-card td:first-child {
+      color: var(--muted);
+    }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      border-top: 1px solid var(--accent);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    footer a {
+      color: var(--highlight);
+      text-decoration: none;
+    }
+    code {
+      background: var(--bg);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .quick-start {
+      background: var(--accent);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+    .quick-start h3 {
+      margin-bottom: 1rem;
+    }
+    .quick-start ol {
+      padding-left: 1.5rem;
+    }
+    .quick-start li {
+      margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ESP32 Motor Controller</h1>
+    <p>Production-ready modular motor controller for ESP32 with web UI, REST API, OTA updates, and motion presets.</p>
+    <div class="hero-buttons">
+      <a href="flasher.html" class="btn btn-primary">Flash Firmware</a>
+      <a href="#documentation" class="btn btn-secondary">Documentation</a>
+      <a href="https://github.com/yourusername/esp32-motor-controller" class="btn btn-secondary">GitHub</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <section id="features">
+      <h2>Features</h2>
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon">&#9881;</div>
+          <h3>4 Motor Slots</h3>
+          <p>Control up to 4 motors simultaneously with independent configuration and control for each slot.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128187;</div>
+          <h3>Web Dashboard</h3>
+          <p>Beautiful responsive web UI for configuring and controlling motors from any device.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128268;</div>
+          <h3>REST API</h3>
+          <p>Full REST API for integration with other systems, automation, and custom applications.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128246;</div>
+          <h3>WiFi OTA Updates</h3>
+          <p>Update firmware wirelessly without needing physical access to the device.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#127916;</div>
+          <h3>Motion Presets</h3>
+          <p>Record and playback motion sequences. Create complex automated movements.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128274;</div>
+          <h3>Safety Features</h3>
+          <p>Hardware E-stop support, position limits, and fail-safe motor shutdown.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="motors">
+      <h2>Supported Motor Types</h2>
+      <div class="motor-types">
+        <div class="motor-card">
+          <h4>DC Motors</h4>
+          <ul>
+            <li>L298N H-Bridge</li>
+            <li>L9110S Driver</li>
+            <li>PWM Speed Control</li>
+            <li>Brake/Coast Modes</li>
+          </ul>
+        </div>
+        <div class="motor-card">
+          <h4>Servo Motors</h4>
+          <ul>
+            <li>Standard RC Servos</li>
+            <li>0-180 degree range</li>
+            <li>Smooth transitions</li>
+            <li>Customizable timing</li>
+          </ul>
+        </div>
+        <div class="motor-card">
+          <h4>NEMA17 Steppers</h4>
+          <ul>
+            <li>A4988 Driver</li>
+            <li>DRV8825 Driver</li>
+            <li>Microstepping</li>
+            <li>Acceleration control</li>
+          </ul>
+        </div>
+        <div class="motor-card">
+          <h4>28BYJ-48 Steppers</h4>
+          <ul>
+            <li>ULN2003 Driver</li>
+            <li>4-wire control</li>
+            <li>Half-step mode</li>
+            <li>Low cost option</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="documentation">
+      <h2>Documentation</h2>
+
+      <div class="quick-start">
+        <h3>Quick Start</h3>
+        <ol>
+          <li><strong>Flash the firmware</strong> using the <a href="flasher.html">Web Flasher</a> (Chrome/Edge required)</li>
+          <li><strong>Connect to WiFi</strong> - Device creates AP "MotorController" (password: motorctrl)</li>
+          <li><strong>Open dashboard</strong> at <code>http://192.168.4.1</code></li>
+          <li><strong>Configure motors</strong> - Select type and assign GPIO pins for each slot</li>
+          <li><strong>Control motors</strong> - Use sliders, buttons, or the REST API</li>
+        </ol>
+      </div>
+
+      <div class="api-section">
+        <h3>REST API Endpoints</h3>
+        <div class="api-endpoint">
+          <span class="method get">GET</span>
+          <span>/api/status</span>
+          <span style="color: var(--muted); margin-left: auto;">Full system status</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method get">GET</span>
+          <span>/api/motors</span>
+          <span style="color: var(--muted); margin-left: auto;">All motor slots</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method post">POST</span>
+          <span>/api/motors/{slot}/configure</span>
+          <span style="color: var(--muted); margin-left: auto;">Configure motor type</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method post">POST</span>
+          <span>/api/motors/{slot}/control</span>
+          <span style="color: var(--muted); margin-left: auto;">Send command</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method post">POST</span>
+          <span>/api/motors/stop-all</span>
+          <span style="color: var(--muted); margin-left: auto;">Emergency stop</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method get">GET</span>
+          <span>/api/presets</span>
+          <span style="color: var(--muted); margin-left: auto;">List presets</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method post">POST</span>
+          <span>/api/presets/{name}/play</span>
+          <span style="color: var(--muted); margin-left: auto;">Play preset</span>
+        </div>
+        <div class="api-endpoint">
+          <span class="method post">POST</span>
+          <span>/api/system/ota</span>
+          <span style="color: var(--muted); margin-left: auto;">Upload firmware</span>
+        </div>
+      </div>
+
+      <div class="wiring-section">
+        <h3>Wiring Examples</h3>
+        <div class="wiring-grid">
+          <div class="wiring-card">
+            <h4>L298N DC Motor (Slot 0)</h4>
+            <table>
+              <tr><td>IN1</td><td>GPIO 13</td></tr>
+              <tr><td>IN2</td><td>GPIO 12</td></tr>
+              <tr><td>ENA</td><td>GPIO 14</td></tr>
+              <tr><td>GND</td><td>GND</td></tr>
+              <tr><td>+12V</td><td>External PSU</td></tr>
+            </table>
+          </div>
+          <div class="wiring-card">
+            <h4>A4988 Stepper (Slot 1)</h4>
+            <table>
+              <tr><td>STEP</td><td>GPIO 27</td></tr>
+              <tr><td>DIR</td><td>GPIO 26</td></tr>
+              <tr><td>ENABLE</td><td>GPIO 25</td></tr>
+              <tr><td>GND</td><td>GND</td></tr>
+              <tr><td>VMOT</td><td>12-24V PSU</td></tr>
+            </table>
+          </div>
+          <div class="wiring-card">
+            <h4>Servo Motor (Slot 2)</h4>
+            <table>
+              <tr><td>Signal</td><td>GPIO 33</td></tr>
+              <tr><td>VCC</td><td>5V (external)</td></tr>
+              <tr><td>GND</td><td>GND</td></tr>
+            </table>
+          </div>
+          <div class="wiring-card">
+            <h4>E-Stop Button</h4>
+            <table>
+              <tr><td>Button</td><td>GPIO 0 (Boot)</td></tr>
+              <tr><td>Mode</td><td>Normally Open</td></tr>
+              <tr><td>Pull-up</td><td>Internal</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="downloads">
+      <h2>Downloads</h2>
+      <div class="features" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <a href="downloads/motor_controller_esp32_v1.0.0.bin" class="feature-card" style="text-decoration: none; text-align: center;">
+          <div class="feature-icon">&#128190;</div>
+          <h3>ESP32</h3>
+          <p>Standard ESP32</p>
+        </a>
+        <a href="downloads/motor_controller_esp32s3_v1.0.0.bin" class="feature-card" style="text-decoration: none; text-align: center;">
+          <div class="feature-icon">&#128190;</div>
+          <h3>ESP32-S3</h3>
+          <p>ESP32-S3 variant</p>
+        </a>
+        <a href="downloads/motor_controller_esp32c3_v1.0.0.bin" class="feature-card" style="text-decoration: none; text-align: center;">
+          <div class="feature-icon">&#128190;</div>
+          <h3>ESP32-C3</h3>
+          <p>ESP32-C3 variant</p>
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <p>ESP32 Motor Controller &copy; 2024 | <a href="https://github.com/yourusername/esp32-motor-controller">GitHub</a> | MIT License</p>
+  </footer>
+</body>
+</html>

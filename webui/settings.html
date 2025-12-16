@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Motor Controller</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #1a1a2e;
+      --card: #16213e;
+      --accent: #0f3460;
+      --highlight: #e94560;
+      --text: #eee;
+      --muted: #888;
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --danger: #ef4444;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: var(--card);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    header h1 { font-size: 1.5rem; }
+    nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    nav a {
+      padding: 0.75rem 1.5rem;
+      background: var(--card);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    nav a:hover, nav a.active { background: var(--accent); }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1rem;
+    }
+    .panel {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .panel h2 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .panel-icon { font-size: 1.25rem; }
+    label {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.625rem;
+      background: var(--bg);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--highlight);
+    }
+    input[type="file"] {
+      padding: 0.5rem;
+    }
+    button {
+      padding: 0.625rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+    }
+    .btn-primary { background: var(--highlight); color: white; }
+    .btn-primary:hover { background: #d63d56; }
+    .btn-secondary { background: var(--accent); color: var(--text); }
+    .btn-secondary:hover { background: #1a4980; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-warning { background: var(--warning); color: #000; }
+    .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    .info-item {
+      padding: 0.75rem;
+      background: var(--bg);
+      border-radius: 8px;
+    }
+    .info-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+    .info-value {
+      font-size: 1rem;
+      font-family: monospace;
+    }
+    .info-value.highlight { color: var(--highlight); }
+    .progress-bar {
+      height: 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--highlight);
+      transition: width 0.3s;
+    }
+    .upload-status {
+      text-align: center;
+      padding: 1rem;
+      display: none;
+    }
+    .upload-status.active { display: block; }
+    .upload-status .icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+    .wifi-mode {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .wifi-mode button {
+      flex: 1;
+      padding: 1rem;
+      background: var(--bg);
+      border: 2px solid var(--accent);
+    }
+    .wifi-mode button.active {
+      border-color: var(--highlight);
+      background: var(--accent);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+    .status-badge.connected { background: var(--success); color: #000; }
+    .status-badge.disconnected { background: var(--danger); color: white; }
+    .status-badge.ap { background: var(--warning); color: #000; }
+    .danger-zone {
+      border: 2px solid var(--danger);
+      margin-top: 1rem;
+    }
+    .danger-zone h2 { color: var(--danger); }
+    .hidden { display: none !important; }
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card);
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--success);
+    }
+    .toast.error { border-color: var(--danger); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Settings</h1>
+  </header>
+
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/presets">Presets</a>
+    <a href="/settings" class="active">Settings</a>
+  </nav>
+
+  <div class="settings-grid">
+    <!-- System Info -->
+    <div class="panel">
+      <h2><span class="panel-icon">&#9881;</span> System Information</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Firmware</div>
+          <div class="info-value" id="firmware">-</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Version</div>
+          <div class="info-value highlight" id="version">-</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Chip</div>
+          <div class="info-value" id="chip">-</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">CPU Freq</div>
+          <div class="info-value" id="cpuFreq">-</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Heap Free</div>
+          <div class="info-value" id="heapFree">-</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Heap Min</div>
+          <div class="info-value" id="heapMin">-</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Flash Size</div>
+          <div class="info-value" id="flashSize">-</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Uptime</div>
+          <div class="info-value" id="uptime">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WiFi Settings -->
+    <div class="panel">
+      <h2><span class="panel-icon">&#128246;</span> WiFi Configuration</h2>
+
+      <div class="info-item" style="margin-bottom: 1rem;">
+        <div class="info-label">Current Mode</div>
+        <div class="info-value">
+          <span class="status-badge" id="wifiModeBadge">-</span>
+          <span id="wifiSSID" style="margin-left: 0.5rem;">-</span>
+        </div>
+      </div>
+
+      <div class="info-grid" style="margin-bottom: 1rem;">
+        <div class="info-item">
+          <div class="info-label">IP Address</div>
+          <div class="info-value" id="wifiIP">-</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Signal</div>
+          <div class="info-value" id="wifiRSSI">-</div>
+        </div>
+      </div>
+
+      <h3 style="font-size: 0.9rem; margin-bottom: 0.75rem;">Change WiFi</h3>
+
+      <div class="wifi-mode">
+        <button id="modeAP" onclick="setWifiMode(true)">Access Point</button>
+        <button id="modeSTA" onclick="setWifiMode(false)">Join Network</button>
+      </div>
+
+      <div>
+        <label>SSID</label>
+        <input type="text" id="wifiNewSSID" placeholder="Network name">
+      </div>
+      <div>
+        <label>Password</label>
+        <input type="password" id="wifiNewPassword" placeholder="Password (min 8 chars)">
+      </div>
+
+      <button class="btn-primary" onclick="saveWifi()">Save &amp; Reboot</button>
+    </div>
+
+    <!-- OTA Update -->
+    <div class="panel">
+      <h2><span class="panel-icon">&#8635;</span> Firmware Update (OTA)</h2>
+
+      <div id="otaForm">
+        <p style="color: var(--muted); margin-bottom: 1rem; font-size: 0.875rem;">
+          Upload a new firmware binary (.bin) to update the device over WiFi.
+        </p>
+
+        <div>
+          <label>Firmware File</label>
+          <input type="file" id="firmwareFile" accept=".bin">
+        </div>
+
+        <button class="btn-warning" onclick="uploadFirmware()">Upload Firmware</button>
+      </div>
+
+      <div class="upload-status" id="uploadStatus">
+        <div class="icon" id="uploadIcon">&#8635;</div>
+        <div id="uploadMessage">Uploading...</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="uploadProgress" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Motor Config -->
+    <div class="panel">
+      <h2><span class="panel-icon">&#9881;</span> Motor Configuration</h2>
+
+      <div class="info-item" style="margin-bottom: 1rem;">
+        <div class="info-label">Configured Motors</div>
+        <div class="info-value highlight" id="motorCount">0 / 4</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveMotorConfig()">Save Config to Flash</button>
+        <button class="btn-secondary" onclick="location.href='/'">Configure Motors</button>
+      </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="panel danger-zone">
+      <h2><span class="panel-icon">&#9888;</span> Danger Zone</h2>
+
+      <p style="color: var(--muted); margin-bottom: 1rem; font-size: 0.875rem;">
+        These actions cannot be undone. Use with caution.
+      </p>
+
+      <div class="btn-row">
+        <button class="btn-danger" onclick="factoryReset()">Factory Reset</button>
+        <button class="btn-warning" onclick="rebootDevice()">Reboot Device</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    let apMode = true;
+
+    function init() {
+      loadSystemInfo();
+      loadWifiInfo();
+      setInterval(loadSystemInfo, 5000);
+    }
+
+    async function loadSystemInfo() {
+      try {
+        const res = await fetch('/api/system/info');
+        const data = await res.json();
+
+        document.getElementById('firmware').textContent = data.firmware || 'Motor Controller';
+        document.getElementById('version').textContent = data.version || '-';
+        document.getElementById('chip').textContent = data.chip || '-';
+        document.getElementById('cpuFreq').textContent = (data.cpuFreq || 0) + ' MHz';
+        document.getElementById('heapFree').textContent = formatBytes(data.heapFree);
+        document.getElementById('heapMin').textContent = formatBytes(data.heapMin);
+        document.getElementById('flashSize').textContent = formatBytes(data.flashSize);
+        document.getElementById('uptime').textContent = data.uptimeStr || '-';
+        document.getElementById('motorCount').textContent =
+          (data.configuredMotors || 0) + ' / 4';
+      } catch (e) {
+        console.error('Failed to load system info', e);
+      }
+    }
+
+    async function loadWifiInfo() {
+      try {
+        const res = await fetch('/api/system/wifi');
+        const data = await res.json();
+
+        const badge = document.getElementById('wifiModeBadge');
+        if (data.mode === 'AP') {
+          badge.className = 'status-badge ap';
+          badge.textContent = 'AP Mode';
+          document.getElementById('wifiRSSI').textContent = data.stations + ' clients';
+        } else {
+          badge.className = data.connected ? 'status-badge connected' : 'status-badge disconnected';
+          badge.textContent = data.connected ? 'Connected' : 'Disconnected';
+          document.getElementById('wifiRSSI').textContent = (data.rssi || 0) + ' dBm';
+        }
+
+        document.getElementById('wifiSSID').textContent = data.ssid || '-';
+        document.getElementById('wifiIP').textContent = data.ip || '-';
+
+        apMode = data.mode === 'AP';
+        updateWifiModeButtons();
+      } catch (e) {
+        console.error('Failed to load wifi info', e);
+      }
+    }
+
+    function setWifiMode(isAP) {
+      apMode = isAP;
+      updateWifiModeButtons();
+    }
+
+    function updateWifiModeButtons() {
+      document.getElementById('modeAP').classList.toggle('active', apMode);
+      document.getElementById('modeSTA').classList.toggle('active', !apMode);
+    }
+
+    async function saveWifi() {
+      const ssid = document.getElementById('wifiNewSSID').value.trim();
+      const password = document.getElementById('wifiNewPassword').value;
+
+      if (!ssid) return toast('Enter SSID', true);
+      if (password.length > 0 && password.length < 8) {
+        return toast('Password must be at least 8 characters', true);
+      }
+
+      if (!confirm('Save WiFi settings and reboot?')) return;
+
+      try {
+        const res = await fetch('/api/system/wifi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ssid, password, apMode })
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast('WiFi saved, rebooting...');
+        } else {
+          toast(data.error || 'Failed to save', true);
+        }
+      } catch (e) {
+        toast('Connection error', true);
+      }
+    }
+
+    async function uploadFirmware() {
+      const fileInput = document.getElementById('firmwareFile');
+      if (!fileInput.files.length) {
+        return toast('Select a firmware file', true);
+      }
+
+      const file = fileInput.files[0];
+      if (!file.name.endsWith('.bin')) {
+        return toast('File must be a .bin firmware', true);
+      }
+
+      if (!confirm('Upload new firmware? Device will reboot after update.')) return;
+
+      const formData = new FormData();
+      formData.append('firmware', file);
+
+      document.getElementById('otaForm').classList.add('hidden');
+      const status = document.getElementById('uploadStatus');
+      status.classList.add('active');
+
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/system/ota', true);
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = (e.loaded / e.total * 100).toFixed(0);
+            document.getElementById('uploadProgress').style.width = pct + '%';
+            document.getElementById('uploadMessage').textContent = `Uploading... ${pct}%`;
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            document.getElementById('uploadIcon').innerHTML = '&#10004;';
+            document.getElementById('uploadMessage').textContent = 'Update complete! Rebooting...';
+            document.getElementById('uploadProgress').style.width = '100%';
+          } else {
+            showUploadError('Upload failed');
+          }
+        };
+
+        xhr.onerror = () => showUploadError('Connection error');
+        xhr.send(formData);
+
+      } catch (e) {
+        showUploadError('Upload error');
+      }
+    }
+
+    function showUploadError(msg) {
+      document.getElementById('uploadIcon').innerHTML = '&#10006;';
+      document.getElementById('uploadMessage').textContent = msg;
+      document.getElementById('uploadProgress').style.background = 'var(--danger)';
+
+      setTimeout(() => {
+        document.getElementById('otaForm').classList.remove('hidden');
+        document.getElementById('uploadStatus').classList.remove('active');
+        document.getElementById('uploadProgress').style.width = '0%';
+        document.getElementById('uploadProgress').style.background = '';
+      }, 3000);
+    }
+
+    async function saveMotorConfig() {
+      try {
+        await fetch('/api/motors/save-config', { method: 'POST' });
+        toast('Configuration saved to flash');
+      } catch (e) {
+        toast('Failed to save', true);
+      }
+    }
+
+    async function factoryReset() {
+      if (!confirm('This will erase ALL settings including motor configurations and presets. Continue?')) return;
+      if (!confirm('Are you REALLY sure? This cannot be undone!')) return;
+
+      try {
+        await fetch('/api/system/factory-reset', { method: 'POST' });
+        toast('Factory reset complete, rebooting...');
+      } catch (e) {
+        toast('Failed to reset', true);
+      }
+    }
+
+    async function rebootDevice() {
+      if (!confirm('Reboot the device?')) return;
+
+      try {
+        await fetch('/api/system/reboot', { method: 'POST' });
+        toast('Rebooting...');
+      } catch (e) {
+        toast('Failed to reboot', true);
+      }
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes) return '-';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function toast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast' + (isError ? ' error' : '');
+      setTimeout(() => t.classList.add('hidden'), 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presets - Motor Controller</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #1a1a2e;
+      --card: #16213e;
+      --accent: #0f3460;
+      --highlight: #e94560;
+      --text: #eee;
+      --muted: #888;
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --danger: #ef4444;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: var(--card);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    header h1 { font-size: 1.5rem; }
+    nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    nav a {
+      padding: 0.75rem 1.5rem;
+      background: var(--card);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    nav a:hover, nav a.active { background: var(--accent); }
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 1rem;
+    }
+    @media (max-width: 900px) {
+      .content { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .panel h2 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--accent);
+    }
+    .preset-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .preset-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: var(--bg);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .preset-item:hover { background: var(--accent); }
+    .preset-item.active { border: 2px solid var(--highlight); }
+    .preset-item.playing { border: 2px solid var(--success); animation: glow 1s infinite; }
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 5px rgba(74,222,128,0.3); }
+      50% { box-shadow: 0 0 15px rgba(74,222,128,0.6); }
+    }
+    .preset-name { font-weight: 500; }
+    .preset-steps { font-size: 0.8rem; color: var(--muted); }
+    .preset-actions { display: flex; gap: 0.25rem; }
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      background: var(--accent);
+      color: var(--text);
+    }
+    .icon-btn:hover { background: var(--highlight); }
+    .icon-btn.danger:hover { background: var(--danger); }
+    button {
+      padding: 0.625rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+    }
+    .btn-primary { background: var(--highlight); color: white; }
+    .btn-primary:hover { background: #d63d56; }
+    .btn-secondary { background: var(--accent); color: var(--text); }
+    .btn-secondary:hover { background: #1a4980; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-success { background: var(--success); color: #000; }
+    .btn-warning { background: var(--warning); color: #000; }
+    label {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.625rem;
+      background: var(--bg);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--highlight);
+    }
+    .form-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .form-row > * { flex: 1; }
+    .step-list {
+      max-height: 400px;
+      overflow-y: auto;
+      margin: 1rem 0;
+    }
+    .step-item {
+      display: grid;
+      grid-template-columns: 40px 1fr 80px 80px 40px;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.5rem;
+      background: var(--bg);
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+    }
+    .step-num {
+      font-weight: bold;
+      color: var(--highlight);
+      text-align: center;
+    }
+    .step-item select, .step-item input {
+      margin-bottom: 0;
+      padding: 0.4rem;
+    }
+    .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .recording-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: var(--danger);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .recording-dot {
+      width: 12px;
+      height: 12px;
+      background: white;
+      border-radius: 50%;
+    }
+    .playback-controls {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1rem;
+      background: var(--accent);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+    .playback-status {
+      flex: 1;
+      font-size: 0.9rem;
+    }
+    .hidden { display: none !important; }
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card);
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--success);
+    }
+    .toast.error { border-color: var(--danger); }
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .checkbox-row input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Motion Presets</h1>
+  </header>
+
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/presets" class="active">Presets</a>
+    <a href="/settings">Settings</a>
+  </nav>
+
+  <div class="playback-controls hidden" id="playbackControls">
+    <div class="playback-status">
+      <strong>Now Playing:</strong> <span id="playingName">-</span>
+      <br><small>Step <span id="playingStep">0</span></small>
+    </div>
+    <button class="btn-danger" onclick="stopPlayback()">Stop</button>
+  </div>
+
+  <div class="recording-indicator hidden" id="recordingIndicator">
+    <span class="recording-dot"></span>
+    <span>Recording: <strong id="recordingName">-</strong></span>
+    <button class="btn-secondary" onclick="recordStep()" style="margin-left: auto;">Capture Step</button>
+    <button class="btn-warning" onclick="stopRecording()">Stop</button>
+  </div>
+
+  <div class="content">
+    <div class="panel">
+      <h2>Saved Presets</h2>
+      <div class="preset-list" id="presetList">
+        <div class="empty-state">No presets yet</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="showNewPreset()">New Preset</button>
+        <button class="btn-secondary" onclick="startRecording()">Record</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 id="editorTitle">Preset Editor</h2>
+
+      <div id="editorForm">
+        <div class="form-row">
+          <div>
+            <label>Preset Name</label>
+            <input type="text" id="presetName" placeholder="My Preset">
+          </div>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="presetLoop">
+          <label for="presetLoop" style="margin: 0;">Loop playback</label>
+        </div>
+
+        <h3 style="font-size: 0.9rem; margin: 1rem 0 0.5rem;">Sequence Steps</h3>
+        <div class="step-list" id="stepList">
+          <!-- Steps added dynamically -->
+        </div>
+
+        <button class="btn-secondary" onclick="addStep()" style="width: 100%;">+ Add Step</button>
+
+        <div class="btn-row">
+          <button class="btn-primary" onclick="savePreset()">Save Preset</button>
+          <button class="btn-secondary" onclick="clearEditor()">Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    let presets = [];
+    let currentPreset = null;
+    let steps = [];
+    let isRecording = false;
+    let isPlaying = false;
+    let pollInterval;
+
+    const COMMANDS = [
+      { value: 'stop', label: 'Stop' },
+      { value: 'speed', label: 'Set Speed' },
+      { value: 'position', label: 'Go To Position' },
+      { value: 'angle', label: 'Set Angle' },
+      { value: 'relative', label: 'Move Relative' },
+      { value: 'delay', label: 'Delay (ms)' }
+    ];
+
+    function init() {
+      loadPresets();
+      startPolling();
+    }
+
+    async function loadPresets() {
+      try {
+        const res = await fetch('/api/presets');
+        const data = await res.json();
+        presets = data.presets || [];
+        renderPresetList();
+        updatePlaybackState(data);
+      } catch (e) {
+        console.error('Failed to load presets', e);
+      }
+    }
+
+    function renderPresetList() {
+      const list = document.getElementById('presetList');
+      if (presets.length === 0) {
+        list.innerHTML = '<div class="empty-state">No presets yet</div>';
+        return;
+      }
+
+      list.innerHTML = presets.map(p => `
+        <div class="preset-item ${currentPreset === p.name ? 'active' : ''}"
+             onclick="selectPreset('${p.name}')">
+          <div>
+            <div class="preset-name">${p.name}</div>
+            <div class="preset-steps">${p.stepCount || 0} steps${p.loop ? ' (loop)' : ''}</div>
+          </div>
+          <div class="preset-actions" onclick="event.stopPropagation()">
+            <button class="icon-btn" onclick="playPreset('${p.name}')" title="Play">&#9658;</button>
+            <button class="icon-btn danger" onclick="deletePreset('${p.name}')" title="Delete">&#10005;</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function selectPreset(name) {
+      currentPreset = name;
+      renderPresetList();
+
+      try {
+        const res = await fetch(`/api/presets/${name}`);
+        const data = await res.json();
+
+        document.getElementById('presetName').value = data.name;
+        document.getElementById('presetLoop').checked = data.loop || false;
+        steps = data.steps || [];
+        renderSteps();
+        document.getElementById('editorTitle').textContent = `Editing: ${name}`;
+      } catch (e) {
+        toast('Failed to load preset', true);
+      }
+    }
+
+    function showNewPreset() {
+      currentPreset = null;
+      document.getElementById('presetName').value = '';
+      document.getElementById('presetLoop').checked = false;
+      steps = [];
+      renderSteps();
+      document.getElementById('editorTitle').textContent = 'New Preset';
+      renderPresetList();
+    }
+
+    function clearEditor() {
+      showNewPreset();
+    }
+
+    function renderSteps() {
+      const list = document.getElementById('stepList');
+      if (steps.length === 0) {
+        list.innerHTML = '<div class="empty-state">No steps - add some!</div>';
+        return;
+      }
+
+      list.innerHTML = steps.map((step, i) => `
+        <div class="step-item">
+          <span class="step-num">${i + 1}</span>
+          <select onchange="updateStep(${i}, 'slot', this.value)">
+            <option value="0" ${step.slot === 0 ? 'selected' : ''}>Motor 0</option>
+            <option value="1" ${step.slot === 1 ? 'selected' : ''}>Motor 1</option>
+            <option value="2" ${step.slot === 2 ? 'selected' : ''}>Motor 2</option>
+            <option value="3" ${step.slot === 3 ? 'selected' : ''}>Motor 3</option>
+            <option value="-1" ${step.slot === -1 ? 'selected' : ''}>All / Delay</option>
+          </select>
+          <select onchange="updateStep(${i}, 'command', this.value)">
+            ${COMMANDS.map(c => `<option value="${c.value}" ${step.command === c.value ? 'selected' : ''}>${c.label}</option>`).join('')}
+          </select>
+          <input type="number" value="${step.value || 0}"
+                 onchange="updateStep(${i}, 'value', this.value)" placeholder="Value">
+          <button class="icon-btn danger" onclick="removeStep(${i})">&#10005;</button>
+        </div>
+      `).join('');
+    }
+
+    function addStep() {
+      steps.push({ slot: 0, command: 'speed', value: 0 });
+      renderSteps();
+    }
+
+    function removeStep(index) {
+      steps.splice(index, 1);
+      renderSteps();
+    }
+
+    function updateStep(index, field, value) {
+      if (field === 'slot' || field === 'value') {
+        steps[index][field] = parseInt(value);
+      } else {
+        steps[index][field] = value;
+      }
+    }
+
+    async function savePreset() {
+      const name = document.getElementById('presetName').value.trim();
+      if (!name) return toast('Enter a preset name', true);
+      if (steps.length === 0) return toast('Add at least one step', true);
+
+      const preset = {
+        name,
+        loop: document.getElementById('presetLoop').checked,
+        steps
+      };
+
+      try {
+        const res = await fetch('/api/presets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(preset)
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast('Preset saved');
+          loadPresets();
+          currentPreset = name;
+        } else {
+          toast(data.error || 'Failed to save', true);
+        }
+      } catch (e) {
+        toast('Connection error', true);
+      }
+    }
+
+    async function deletePreset(name) {
+      if (!confirm(`Delete preset "${name}"?`)) return;
+
+      try {
+        await fetch(`/api/presets/${name}`, { method: 'DELETE' });
+        toast('Preset deleted');
+        if (currentPreset === name) showNewPreset();
+        loadPresets();
+      } catch (e) {
+        toast('Failed to delete', true);
+      }
+    }
+
+    async function playPreset(name) {
+      try {
+        await fetch(`/api/presets/${name}/play`, { method: 'POST' });
+        toast(`Playing: ${name}`);
+      } catch (e) {
+        toast('Failed to start playback', true);
+      }
+    }
+
+    async function stopPlayback() {
+      try {
+        await fetch('/api/presets/stop', { method: 'POST' });
+        toast('Playback stopped');
+      } catch (e) {
+        toast('Failed to stop', true);
+      }
+    }
+
+    async function startRecording() {
+      const name = prompt('Recording name:', 'Recording ' + Date.now());
+      if (!name) return;
+
+      try {
+        await fetch('/api/presets/record/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        isRecording = true;
+        document.getElementById('recordingIndicator').classList.remove('hidden');
+        document.getElementById('recordingName').textContent = name;
+        toast('Recording started - use dashboard to move motors, then capture steps');
+      } catch (e) {
+        toast('Failed to start recording', true);
+      }
+    }
+
+    async function recordStep() {
+      try {
+        await fetch('/api/presets/record/step', { method: 'POST' });
+        toast('Step recorded');
+      } catch (e) {
+        toast('Failed to record step', true);
+      }
+    }
+
+    async function stopRecording() {
+      try {
+        await fetch('/api/presets/record/stop', { method: 'POST' });
+        isRecording = false;
+        document.getElementById('recordingIndicator').classList.add('hidden');
+        toast('Recording saved');
+        loadPresets();
+      } catch (e) {
+        toast('Failed to stop recording', true);
+      }
+    }
+
+    function updatePlaybackState(data) {
+      const controls = document.getElementById('playbackControls');
+      const recording = document.getElementById('recordingIndicator');
+
+      if (data.playing) {
+        controls.classList.remove('hidden');
+        document.getElementById('playingName').textContent = data.playingPreset || '-';
+        document.getElementById('playingStep').textContent = data.currentStep || 0;
+      } else {
+        controls.classList.add('hidden');
+      }
+
+      if (data.recording) {
+        isRecording = true;
+        recording.classList.remove('hidden');
+        document.getElementById('recordingName').textContent = data.recordingName || '-';
+      } else {
+        isRecording = false;
+        recording.classList.add('hidden');
+      }
+    }
+
+    async function pollStatus() {
+      try {
+        const res = await fetch('/api/presets/status');
+        const data = await res.json();
+        updatePlaybackState(data);
+      } catch (e) {
+        // Ignore poll errors
+      }
+    }
+
+    function startPolling() {
+      pollInterval = setInterval(pollStatus, 1000);
+    }
+
+    function toast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast' + (isError ? ' error' : '');
+      setTimeout(() => t.classList.add('hidden'), 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

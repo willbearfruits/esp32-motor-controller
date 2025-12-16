@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Flasher - ESP32 Motor Controller</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f23;
+      --card: #1a1a2e;
+      --accent: #16213e;
+      --highlight: #e94560;
+      --text: #eee;
+      --muted: #888;
+      --success: #4ade80;
+      --warning: #fbbf24;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1.5rem 2rem;
+      background: var(--card);
+      border-bottom: 2px solid var(--accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 1.5rem;
+    }
+    header a {
+      color: var(--highlight);
+      text-decoration: none;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+    .flasher-container {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 3rem;
+      max-width: 500px;
+      width: 100%;
+    }
+    .flasher-container h2 {
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+    .flasher-container p {
+      color: var(--muted);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    esp-web-install-button {
+      --esp-tools-button-background: var(--highlight);
+      --esp-tools-button-text-color: white;
+    }
+    esp-web-install-button::part(button) {
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    esp-web-install-button::part(button):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(233, 69, 96, 0.3);
+    }
+    .requirements {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--accent);
+      text-align: left;
+    }
+    .requirements h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: var(--warning);
+    }
+    .requirements ul {
+      list-style: none;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .requirements li {
+      padding: 0.5rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+    .requirements li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--success);
+    }
+    .steps {
+      background: var(--accent);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-top: 2rem;
+      text-align: left;
+      max-width: 500px;
+    }
+    .steps h3 {
+      margin-bottom: 1rem;
+    }
+    .steps ol {
+      padding-left: 1.5rem;
+    }
+    .steps li {
+      padding: 0.5rem 0;
+      color: var(--muted);
+    }
+    .steps li strong {
+      color: var(--text);
+    }
+    .warning-box {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid var(--warning);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--warning);
+    }
+    .success-box {
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid var(--success);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--success);
+    }
+    footer {
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--accent);
+    }
+    footer a {
+      color: var(--highlight);
+      text-decoration: none;
+    }
+    .browser-warning {
+      display: none;
+      background: var(--card);
+      border: 2px solid var(--highlight);
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 500px;
+    }
+    .browser-warning h2 {
+      color: var(--highlight);
+      margin-bottom: 1rem;
+    }
+    .browser-warning p {
+      margin-bottom: 1rem;
+    }
+    .browser-warning a {
+      color: var(--highlight);
+    }
+    @supports not (serial: true) {
+      .flasher-container { display: none; }
+      .browser-warning { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ESP32 Motor Controller</h1>
+    <a href="index.html">&larr; Back to Home</a>
+  </header>
+
+  <main>
+    <div class="browser-warning">
+      <h2>Browser Not Supported</h2>
+      <p>Web Serial API is required for flashing. Please use one of these browsers:</p>
+      <ul style="padding-left: 1.5rem; margin-bottom: 1rem;">
+        <li><a href="https://www.google.com/chrome/">Google Chrome</a> (v89+)</li>
+        <li><a href="https://www.microsoft.com/edge">Microsoft Edge</a> (v89+)</li>
+        <li><a href="https://www.opera.com/">Opera</a> (v76+)</li>
+      </ul>
+      <p>Safari and Firefox do not support Web Serial.</p>
+    </div>
+
+    <div class="flasher-container">
+      <h2>Flash Firmware</h2>
+      <p>Install ESP32 Motor Controller firmware directly from your browser. No additional software required!</p>
+
+      <esp-web-install-button manifest="./downloads/manifest.json">
+        <button slot="activate">Install Motor Controller</button>
+        <span slot="unsupported">Your browser doesn't support Web Serial</span>
+        <span slot="not-allowed">Serial access denied by browser</span>
+      </esp-web-install-button>
+
+      <div class="requirements">
+        <h3>Requirements</h3>
+        <ul>
+          <li>Chrome, Edge, or Opera browser</li>
+          <li>USB cable connected to ESP32</li>
+          <li>Appropriate USB drivers installed</li>
+          <li>No other program using the serial port</li>
+        </ul>
+      </div>
+
+      <div class="warning-box">
+        <strong>Note:</strong> If prompted, you may need to hold the BOOT button on your ESP32 while clicking "Install" to enter bootloader mode.
+      </div>
+    </div>
+
+    <div class="steps">
+      <h3>After Flashing</h3>
+      <ol>
+        <li><strong>Wait for reboot</strong> - Device will restart automatically</li>
+        <li><strong>Find WiFi network</strong> - Look for "MotorController" SSID</li>
+        <li><strong>Connect</strong> - Password is <code style="background: var(--card); padding: 0.2rem 0.5rem; border-radius: 4px;">motorctrl</code></li>
+        <li><strong>Open browser</strong> - Go to <code style="background: var(--card); padding: 0.2rem 0.5rem; border-radius: 4px;">http://192.168.4.1</code></li>
+        <li><strong>Configure motors</strong> - Use the web dashboard to set up your motors</li>
+      </ol>
+    </div>
+
+    <div class="success-box" style="max-width: 500px;">
+      <strong>Tip:</strong> You can change WiFi settings later in the Settings page to connect to your existing network.
+    </div>
+  </main>
+
+  <footer>
+    <p>ESP32 Motor Controller | <a href="https://github.com/yourusername/esp32-motor-controller">View on GitHub</a></p>
+  </footer>
+</body>
+</html>
