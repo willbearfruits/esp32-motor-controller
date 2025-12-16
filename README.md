@@ -22,7 +22,7 @@ Production-ready modular motor controller for ESP32 supporting multiple motor ty
 
 ### Option 1: Web Flasher (Easiest)
 
-1. Open [Web Flasher](https://yourusername.github.io/esp32-motor-controller/flasher.html) in Chrome/Edge
+1. Open [Web Flasher](https://willbearfruits.github.io/esp32-motor-controller/flasher.html) in Chrome/Edge
 2. Connect ESP32 via USB
 3. Click "Install Motor Controller"
 4. Connect to WiFi network "MotorController" (password: `motorctrl`)
@@ -32,7 +32,7 @@ Production-ready modular motor controller for ESP32 supporting multiple motor ty
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/esp32-motor-controller.git
+git clone https://github.com/willbearfruits/esp32-motor-controller.git
 cd esp32-motor-controller/motors
 
 # Configure WiFi credentials
