@@ -46,6 +46,7 @@ public:
   static void playPreset(const char* name);
   static void playPreset(const Preset& preset);
   static void stopPlayback();
+  static void tick();  // Call from main loop for playback processing
   static bool isPlaying();
   static uint8_t getCurrentStep();
   static const char* getCurrentPresetName();

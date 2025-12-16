@@ -60,7 +60,7 @@ public:
   void setStepsPerRevolution(uint16_t steps) { stepsPerRev = steps; }
 
 private:
-  AccelStepper stepper;
+  mutable AccelStepper stepper;
   StepperDriver driverType;
 
   uint8_t stepPin, dirPin, enablePin;

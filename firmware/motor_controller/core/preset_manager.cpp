@@ -227,6 +227,14 @@ void PresetManager::stopPlayback() {
   }
 }
 
+void PresetManager::tick() {
+  // Playback is handled by FreeRTOS task, but we can do housekeeping here
+  // Check if playback task ended unexpectedly
+  if (playing && playbackTask == nullptr) {
+    playing = false;
+  }
+}
+
 bool PresetManager::isPlaying() {
   return playing;
 }

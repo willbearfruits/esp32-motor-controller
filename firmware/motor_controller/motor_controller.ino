@@ -38,12 +38,23 @@
 #include "api/api_presets.h"
 #include "api/api_system.h"
 
-// FreeRTOS tasks
-#include "tasks/motor_task.h"
-#include "tasks/encoder_task.h"
-
 // Web pages
 #include "web/web_pages.h"
+
+// Include all .cpp files for Arduino build system
+#include "drivers/dc_motor.cpp"
+#include "drivers/servo_motor.cpp"
+#include "drivers/stepper_nema17.cpp"
+#include "drivers/stepper_28byj48.cpp"
+#include "core/motor_manager.cpp"
+#include "core/safety_manager.cpp"
+#include "core/encoder_manager.cpp"
+#include "core/preset_manager.cpp"
+#include "core/ota_manager.cpp"
+#include "api/api_server.cpp"
+#include "api/api_motors.cpp"
+#include "api/api_presets.cpp"
+#include "api/api_system.cpp"
 
 // ============================================================================
 // Global Objects
@@ -52,15 +63,45 @@
 WebServer server(80);
 Preferences preferences;
 
+// Task handles
+TaskHandle_t motorTaskHandle = NULL;
+TaskHandle_t encoderTaskHandle = NULL;
+
+// ============================================================================
+// FreeRTOS Tasks
+// ============================================================================
+
+void motorTaskFunc(void* param) {
+  TickType_t lastWakeTime = xTaskGetTickCount();
+  const TickType_t interval = pdMS_TO_TICKS(1);  // 1ms = 1kHz
+
+  while (true) {
+    if (!SafetyManager::isEstopActive()) {
+      MotorManager::updateAll();
+    }
+    vTaskDelayUntil(&lastWakeTime, interval);
+  }
+}
+
+void encoderTaskFunc(void* param) {
+  TickType_t lastWakeTime = xTaskGetTickCount();
+  const TickType_t interval = pdMS_TO_TICKS(10);  // 10ms = 100Hz
+
+  while (true) {
+    EncoderManager::update();
+    vTaskDelayUntil(&lastWakeTime, interval);
+  }
+}
+
 // ============================================================================
 // WiFi Setup
 // ============================================================================
 
 void setupWiFi() {
   preferences.begin("wifi", true);
-  String ssid = preferences.getString("ssid", WIFI_SSID);
-  String password = preferences.getString("password", WIFI_PASSWORD);
-  bool apMode = preferences.getBool("apMode", WIFI_AP_MODE);
+  String ssid = preferences.getString("ssid", USE_AP_MODE ? AP_SSID : WIFI_SSID);
+  String password = preferences.getString("password", USE_AP_MODE ? AP_PASS : WIFI_PASS);
+  bool apMode = preferences.getBool("apMode", USE_AP_MODE);
   preferences.end();
 
   if (apMode) {
@@ -119,7 +160,7 @@ void setupWebRoutes() {
   });
 
   // Register API routes
-  ApiServer::init(server);
+  ApiServer::init();
   ApiMotors::registerRoutes(server);
   ApiPresets::registerRoutes(server);
   ApiSystem::registerRoutes(server);
@@ -199,10 +240,26 @@ void setup() {
 
   // Start FreeRTOS tasks
   Serial.println("[Init] Starting motor task...");
-  MotorTask::start();
+  xTaskCreatePinnedToCore(
+    motorTaskFunc,
+    "MotorTask",
+    4096,
+    NULL,
+    configMAX_PRIORITIES - 1,
+    &motorTaskHandle,
+    0  // Core 0
+  );
 
   Serial.println("[Init] Starting encoder task...");
-  EncoderTask::start();
+  xTaskCreatePinnedToCore(
+    encoderTaskFunc,
+    "EncoderTask",
+    2048,
+    NULL,
+    configMAX_PRIORITIES - 2,
+    &encoderTaskHandle,
+    1  // Core 1
+  );
 
   // Setup WiFi
   setupWiFi();
@@ -228,7 +285,7 @@ void loop() {
   OTAManager::handle();
 
   // Update preset playback
-  PresetManager::update();
+  PresetManager::tick();
 
   // Small delay to prevent WDT issues
   delay(1);

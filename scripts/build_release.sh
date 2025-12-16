@@ -60,7 +60,7 @@ for board_name in "${!BOARDS[@]}"; do
         "$FIRMWARE_DIR" 2>/dev/null; then
 
         # Find and copy binary
-        BIN_FILE=$(find "$FIRMWARE_DIR/build" -name "*.bin" -type f | head -1)
+        BIN_FILE=$(find "$FIRMWARE_DIR/build" -name "*.merged.bin" -type f | head -1)
         if [ -f "$BIN_FILE" ]; then
             OUTPUT_NAME="motor_controller_${board_name}_v${VERSION}.bin"
             cp "$BIN_FILE" "$DOCS_DIR/$OUTPUT_NAME"

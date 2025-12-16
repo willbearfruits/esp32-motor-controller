@@ -2,10 +2,24 @@
 #include "api_server.h"
 #include "../core/preset_manager.h"
 
-static WebServer* webServer = nullptr;
+namespace {
+  WebServer* _presetsServer = nullptr;
+
+  String getPresetNameFromUri() {
+    String uri = _presetsServer->uri();
+    int start = uri.indexOf("/api/presets/");
+    if (start < 0) return "";
+
+    start += 13;
+    int end = uri.indexOf("/", start);
+    if (end < 0) end = uri.length();
+
+    return uri.substring(start, end);
+  }
+}
 
 void ApiPresets::registerRoutes(WebServer& server) {
-  webServer = &server;
+  _presetsServer = &server;
 
   server.on("/api/presets", HTTP_GET, handleListPresets);
   server.on("/api/presets", HTTP_POST, handleCreatePreset);
@@ -18,24 +32,10 @@ void ApiPresets::registerRoutes(WebServer& server) {
   Serial.println("[API] Preset routes registered");
 }
 
-// Extract preset name from URI like "/api/presets/mypreset" or "/api/presets/mypreset/play"
-static String getPresetNameFromUri() {
-  String uri = webServer->uri();
-  int start = uri.indexOf("/api/presets/");
-  if (start < 0) return "";
-
-  start += 13;  // Length of "/api/presets/"
-  int end = uri.indexOf("/", start);
-  if (end < 0) end = uri.length();
-
-  return uri.substring(start, end);
-}
-
 void ApiPresets::handleListPresets() {
   JsonDocument doc;
-
-  PresetManager::toJson(doc.to<JsonObject>());
-
+  JsonObject obj = doc.to<JsonObject>();
+  PresetManager::toJson(obj);
   ApiServer::sendJson(200, doc);
 }
 
@@ -52,7 +52,8 @@ void ApiPresets::handleGetPreset() {
   }
 
   JsonDocument doc;
-  if (PresetManager::presetToJson(name.c_str(), doc.to<JsonObject>())) {
+  JsonObject obj = doc.to<JsonObject>();
+  if (PresetManager::presetToJson(name.c_str(), obj)) {
     ApiServer::sendJson(200, doc);
   } else {
     ApiServer::sendError(500, "Failed to load preset");
@@ -159,6 +160,7 @@ void ApiPresets::handleStopRecording() {
 
 void ApiPresets::handleGetStatus() {
   JsonDocument doc;
-  PresetManager::toJson(doc.to<JsonObject>());
+  JsonObject obj = doc.to<JsonObject>();
+  PresetManager::toJson(obj);
   ApiServer::sendJson(200, doc);
 }

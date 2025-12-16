@@ -39,17 +39,17 @@ void ApiServer::setupRoutes() {
 
 void ApiServer::handleRoot() {
   addCorsHeaders();
-  server.send_P(200, "text/html", INDEX_PAGE);
+  server.send_P(200, "text/html", PAGE_INDEX);
 }
 
 void ApiServer::handlePresets() {
   addCorsHeaders();
-  server.send_P(200, "text/html", PRESETS_PAGE);
+  server.send_P(200, "text/html", PAGE_PRESETS);
 }
 
 void ApiServer::handleSettings() {
   addCorsHeaders();
-  server.send_P(200, "text/html", SETTINGS_PAGE);
+  server.send_P(200, "text/html", PAGE_SETTINGS);
 }
 
 void ApiServer::handleNotFound() {

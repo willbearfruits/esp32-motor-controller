@@ -9,7 +9,7 @@ float EncoderManager::velocities[MAX_ENCODERS] = {0};
 
 void EncoderManager::init() {
   // Enable internal pull-ups for encoder pins
-  ESP32Encoder::useInternalWeakPullResistors = UP;
+  ESP32Encoder::useInternalWeakPullResistors = puType::up;
 
   // Initialize default configurations
   for (uint8_t i = 0; i < MAX_ENCODERS; i++) {

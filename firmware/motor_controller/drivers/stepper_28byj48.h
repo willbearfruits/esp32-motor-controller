@@ -49,7 +49,7 @@ public:
   static constexpr int32_t STEPS_PER_REV = ULN2003_STEPS_PER_REV;  // 2048 with 64:1 gearbox
 
 private:
-  AccelStepper stepper;
+  mutable AccelStepper stepper;
   uint8_t pins[4];
 
   float maxSpeedRPM = DEFAULT_28BYJ_SPEED;

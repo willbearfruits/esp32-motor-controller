@@ -28,7 +28,16 @@ Production-ready modular motor controller for ESP32 supporting multiple motor ty
 4. Connect to WiFi network "MotorController" (password: `motorctrl`)
 5. Open `http://192.168.4.1` in browser
 
-### Option 2: Arduino CLI
+### Option 2: Manual Installation
+
+Download the latest pre-compiled binaries from the [releases page](docs/downloads/) or the `docs/downloads/` directory.
+
+Flash using [esptool](https://github.com/espressif/esptool):
+```bash
+esptool.py --chip esp32 --port /dev/ttyUSB0 --baud 921600 write_flash 0x0 motor_controller_esp32_v1.0.0.bin
+```
+
+### Option 3: Arduino CLI
 
 ```bash
 # Clone repository

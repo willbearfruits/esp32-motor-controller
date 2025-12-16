@@ -32,7 +32,7 @@ public:
   float getSpeed() const override;
   uint8_t getCurrentAngle() const { return currentAngle; }
   uint8_t getTargetAngle() const { return targetAngle; }
-  bool isAttached() const { return servo.attached(); }
+  bool isAttached() { return servo.attached(); }
 
   // === Type Info ===
   MotorType getType() const override { return MotorType::SERVO; }
@@ -47,7 +47,7 @@ public:
   void setSpeed(uint8_t degreesPerSecond) { sweepSpeed = degreesPerSecond; }
 
 private:
-  Servo servo;
+  mutable Servo servo;
   uint8_t pin;
   uint16_t minPulse, maxPulse;
 

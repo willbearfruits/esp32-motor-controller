@@ -45,9 +45,9 @@ void DCMotor::update() {
 
   // Ramp speed towards target
   if (currentSpeed < targetSpeed) {
-    currentSpeed = min(currentSpeed + rampRate, targetSpeed);
+    currentSpeed = min(currentSpeed + rampRate, (int)targetSpeed);
   } else if (currentSpeed > targetSpeed) {
-    currentSpeed = max(currentSpeed - rampRate, targetSpeed);
+    currentSpeed = max(currentSpeed - rampRate, (int)targetSpeed);
   }
 
   applySpeed();

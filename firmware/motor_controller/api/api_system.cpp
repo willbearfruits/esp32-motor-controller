@@ -7,10 +7,12 @@
 #include <LittleFS.h>
 #include <Preferences.h>
 
-static WebServer* webServer = nullptr;
+namespace {
+  WebServer* _systemServer = nullptr;
+}
 
 void ApiSystem::registerRoutes(WebServer& server) {
-  webServer = &server;
+  _systemServer = &server;
 
   server.on("/api/system/info", HTTP_GET, handleGetInfo);
   server.on("/api/system/reboot", HTTP_POST, handleReboot);
@@ -24,7 +26,7 @@ void ApiSystem::registerRoutes(WebServer& server) {
   server.on("/api/system/ota", HTTP_POST, []() {
     ApiServer::sendSuccess(OTAManager::getStatus());
   }, []() {
-    HTTPUpload& upload = webServer->upload();
+    HTTPUpload& upload = _systemServer->upload();
 
     if (upload.status == UPLOAD_FILE_START) {
       Serial.printf("[OTA] Upload start: %s\n", upload.filename.c_str());
@@ -52,46 +54,36 @@ void ApiSystem::registerRoutes(WebServer& server) {
 void ApiSystem::handleGetInfo() {
   JsonDocument doc;
 
-  // Firmware info
   doc["firmware"] = FIRMWARE_NAME;
   doc["version"] = FIRMWARE_VERSION;
-
-  // Chip info
   doc["chip"] = ESP.getChipModel();
   doc["cores"] = ESP.getChipCores();
   doc["cpuFreq"] = ESP.getCpuFreqMHz();
   doc["revision"] = ESP.getChipRevision();
 
-  // Memory
   doc["heapFree"] = ESP.getFreeHeap();
   doc["heapTotal"] = ESP.getHeapSize();
   doc["heapMin"] = ESP.getMinFreeHeap();
 
-  // Flash
   doc["flashSize"] = ESP.getFlashChipSize();
   doc["flashSpeed"] = ESP.getFlashChipSpeed();
 
-  // Runtime
   doc["uptime"] = millis() / 1000;
   doc["uptimeStr"] = String(millis() / 3600000) + "h " +
                      String((millis() / 60000) % 60) + "m " +
                      String((millis() / 1000) % 60) + "s";
 
-  // OTA status
-  JsonObject otaObj = doc.createNestedObject("ota");
+  JsonObject otaObj = doc["ota"].to<JsonObject>();
   OTAManager::toJson(otaObj);
 
-  // Safety status
-  JsonObject safetyObj = doc.createNestedObject("safety");
+  JsonObject safetyObj = doc["safety"].to<JsonObject>();
   SafetyManager::toJson(safetyObj);
 
-  // Network
-  JsonObject netObj = doc.createNestedObject("network");
+  JsonObject netObj = doc["network"].to<JsonObject>();
   netObj["mode"] = WiFi.getMode() == WIFI_AP ? "AP" : "STA";
   netObj["ip"] = WiFi.getMode() == WIFI_AP ? WiFi.softAPIP().toString() : WiFi.localIP().toString();
   netObj["hostname"] = DEFAULT_HOSTNAME;
 
-  // Motors
   doc["configuredMotors"] = MotorManager::getConfiguredCount();
 
   ApiServer::sendJson(200, doc);
@@ -104,10 +96,8 @@ void ApiSystem::handleReboot() {
 }
 
 void ApiSystem::handleFactoryReset() {
-  // Stop all motors
   MotorManager::emergencyStopAll();
 
-  // Clear preferences
   Preferences prefs;
   prefs.begin("motors", false);
   prefs.clear();
@@ -117,7 +107,6 @@ void ApiSystem::handleFactoryReset() {
   prefs.clear();
   prefs.end();
 
-  // Clear presets directory
   File dir = LittleFS.open("/presets");
   if (dir && dir.isDirectory()) {
     File file = dir.openNextFile();
@@ -191,7 +180,6 @@ void ApiSystem::handleSetWifi() {
     return;
   }
 
-  // Save to preferences
   Preferences prefs;
   prefs.begin("wifi", false);
   prefs.putString("ssid", ssid);

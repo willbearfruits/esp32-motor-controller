@@ -4,10 +4,24 @@
 #include "../core/safety_manager.h"
 #include "../core/encoder_manager.h"
 
-static WebServer* webServer = nullptr;
+namespace {
+  WebServer* _motorsServer = nullptr;
+
+  int getSlotFromUri() {
+    String uri = _motorsServer->uri();
+    int slotStart = uri.indexOf("/api/motors/") + 12;
+    if (slotStart < 12) return -1;
+
+    char slotChar = uri.charAt(slotStart);
+    if (slotChar >= '0' && slotChar <= '3') {
+      return slotChar - '0';
+    }
+    return -1;
+  }
+}
 
 void ApiMotors::registerRoutes(WebServer& server) {
-  webServer = &server;
+  _motorsServer = &server;
 
   server.on("/api/motors", HTTP_GET, handleGetMotors);
   server.on("/api/status", HTTP_GET, handleGetStatus);
@@ -36,19 +50,6 @@ void ApiMotors::registerRoutes(WebServer& server) {
   server.on("/api/motors/3/remove", HTTP_POST, handleRemoveMotor);
 
   Serial.println("[API] Motor routes registered");
-}
-
-// Extract slot number from URI like "/api/motors/2/control"
-static int getSlotFromUri() {
-  String uri = webServer->uri();
-  int slotStart = uri.indexOf("/api/motors/") + 12;
-  if (slotStart < 12) return -1;
-
-  char slotChar = uri.charAt(slotStart);
-  if (slotChar >= '0' && slotChar <= '3') {
-    return slotChar - '0';
-  }
-  return -1;
 }
 
 void ApiMotors::handleGetMotors() {
@@ -83,7 +84,6 @@ void ApiMotors::handleConfigureMotor() {
     return;
   }
 
-  // Get motor type
   uint8_t typeVal = doc["type"] | 0;
   MotorType type = static_cast<MotorType>(typeVal);
 
@@ -92,7 +92,6 @@ void ApiMotors::handleConfigureMotor() {
     return;
   }
 
-  // Get pin configuration
   JsonObject pinsObj = doc["pins"];
 
   if (MotorManager::configureSlot(slot, type, pinsObj)) {
@@ -120,7 +119,6 @@ void ApiMotors::handleControlMotor() {
     return;
   }
 
-  // Check for E-stop
   if (SafetyManager::isEstopActive()) {
     ApiServer::sendError(403, "E-stop active");
     return;
@@ -132,7 +130,6 @@ void ApiMotors::handleControlMotor() {
     return;
   }
 
-  // Parse command
   String cmdStr = doc["command"] | "";
   int32_t value = doc["value"] | 0;
   uint16_t duration = doc["duration"] | 0;
@@ -187,23 +184,19 @@ void ApiMotors::handleSaveConfig() {
 void ApiMotors::handleGetStatus() {
   JsonDocument doc;
 
-  // Motors
-  JsonObject motorsObj = doc.createNestedObject("motors");
+  JsonObject motorsObj = doc["motors"].to<JsonObject>();
   JsonDocument motorsDoc;
   MotorManager::toJson(motorsDoc);
   motorsObj.set(motorsDoc.as<JsonObject>());
 
-  // Safety
-  JsonObject safetyObj = doc.createNestedObject("safety");
+  JsonObject safetyObj = doc["safety"].to<JsonObject>();
   SafetyManager::toJson(safetyObj);
 
-  // Encoders
   JsonDocument encodersDoc;
   EncoderManager::toJson(encodersDoc);
   doc["encoders"] = encodersDoc["encoders"];
 
-  // System info
-  JsonObject sysObj = doc.createNestedObject("system");
+  JsonObject sysObj = doc["system"].to<JsonObject>();
   sysObj["heap"] = ESP.getFreeHeap();
   sysObj["uptime"] = millis() / 1000;
   sysObj["version"] = FIRMWARE_VERSION;

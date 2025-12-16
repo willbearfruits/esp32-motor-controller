@@ -71,7 +71,19 @@ The easiest method using ESP Web Tools:
 4. Click "Install Motor Controller"
 5. Follow the prompts
 
-### Method 2: Arduino CLI
+### Method 2: Manual Flash
+
+If the Web Flasher doesn't work for you, you can download the pre-compiled binaries from the `docs/downloads/` directory and flash them using `esptool`.
+
+1. **Download binary**: Get the correct `.bin` file for your board (ESP32, S3, or C3).
+2. **Install esptool**: `pip install esptool`
+3. **Flash**:
+
+```bash
+esptool.py --chip esp32 --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x0 motor_controller_esp32_v1.0.0.bin
+```
+
+### Method 3: Arduino CLI
 
 ```bash
 # Install Arduino CLI
@@ -95,7 +107,7 @@ cp firmware/motor_controller/secrets.h.example firmware/motor_controller/secrets
 ./scripts/upload.sh /dev/ttyUSB0
 ```
 
-### Method 3: PlatformIO
+### Method 4: PlatformIO
 
 ```ini
 [env:esp32]
